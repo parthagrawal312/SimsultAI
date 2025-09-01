@@ -1,0 +1,10 @@
+# Dependencies
+/node_modules
+
+# Build output
+/dist
+/build
+
+# Operating System files
+.DS_Store
+Thumbs.db

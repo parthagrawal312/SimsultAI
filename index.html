@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Multi View (6 Models)</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        box-sizing: border-box;
+        background-color: #333;
+        overflow: hidden;
+      }
+
+      #topBar {
+        width: 100%;
+        height: 6vh; /* Fixed percentage height */
+        background: #333;
+        color: white;
+        display: flex;
+        align-items: center;
+        padding: 0 1%;
+        box-sizing: border-box;
+        overflow: hidden;
+        justify-content: space-between;
+        position: relative;
+        z-index: 100;
+      }
+
+      .nav-section {
+        display: flex;
+        align-items: center;
+        gap: 0.5vw;
+      }
+
+      /* --- NEW & IMPROVED BUTTON STYLES --- */
+      .nav-button {
+        background: #4a4a4a;
+        color: white;
+        border: 1px solid #666;
+        padding: 0.5vh 1.2vw;
+        margin: 0;
+        cursor: pointer;
+        border-radius: 6px; /* Modern rounded corners */
+        font-size: 0.9em;
+        font-weight: bold;
+        height: 75%;
+        min-width: 4vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .nav-button:hover {
+        background-color: #5a5a5a;
+        border-color: #888;
+        transform: translateY(-1px); /* Subtle lift effect */
+      }
+      
+      .nav-button:active {
+        transform: translateY(0px); /* Click effect */
+        background-color: #444;
+      }
+
+      .nav-button.icon-button {
+          min-width: 0;
+          width: 2.5vw;
+          height: 2.5vw;
+          max-width: 38px;
+          max-height: 38px;
+          padding: 0;
+      }
+
+      .icon-button svg {
+        width: 65%;
+        height: 65%;
+      }
+
+      .nav-button:disabled {
+        background: #333;
+        border-color: #444;
+        color: #777;
+        cursor: not-allowed;
+        transform: none;
+      }
+      /* --- END NEW BUTTON STYLES --- */
+
+      .new-tab-btn {
+        background: #28a745;
+        border: none;
+      }
+
+      .new-tab-btn:hover {
+        background: #218838;
+      }
+
+      .notes-btn {
+        background: #ffc107;
+        color: #333;
+        border: none;
+      }
+
+      .notes-btn:hover {
+        background: #e0a800;
+      }
+
+      .notes-btn.active {
+        background: #ff9800;
+        color: white;
+      }
+
+      #prompt {
+        flex: 1;
+        padding: 0.5%;
+        font-size: 1em;
+        box-sizing: border-box;
+        margin: 0 1vw;
+        height: 60%;
+        border-radius: 4px;
+        border: 1px solid #555;
+      }
+
+      #urlInput {
+        flex: 1;
+        padding: 0.5%;
+        font-size: 1em;
+        box-sizing: border-box;
+        margin: 0 1vw;
+        height: 60%;
+        border-radius: 4px;
+        border: 1px solid #555;
+        display: none;
+      }
+
+      #sendBtn, #goBtn, #closeTabBtn, #fileBtn {
+        background: #007acc;
+        color: white;
+        border: none;
+        padding: 0.5vh 1.5vw;
+        box-sizing: border-box;
+        height: 75%;
+        font-size: 0.9em;
+        cursor: pointer;
+        border-radius: 6px;
+        min-width: 8vw;
+      }
+
+      #sendBtn:hover, #goBtn:hover, #closeTabBtn:hover, #fileBtn:hover {
+        background: #005a9e;
+      }
+
+      #fileBtn {
+        background: #9c27b0;
+      }
+
+      #fileBtn:hover {
+        background: #7b1fa2;
+      }
+
+      #closeTabBtn {
+        background: #28a745;
+        padding: 0.5vh 1.5vw;
+        min-width: 8vw;
+        display: none;
+      }
+
+      #closeTabBtn:hover {
+        background: #218838;
+      }
+
+      #goBtn {
+        display: none;
+      }
+
+      .status-indicator {
+        font-size: 0.8em;
+        color: #ccc;
+        margin: 0 1vw;
+      }
+
+      .mode-indicator {
+        font-size: 0.8em;
+        color: #ffd700;
+        margin-left: 1vw;
+        font-weight: bold;
+      }
+
+      .file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5vw;
+        margin-left: 1vw;
+        font-size: 0.85em;
+        color: #e0e0e0;
+      }
+
+      .file-icon { font-size: 1.2em; }
+      .file-name { max-width: 15vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .file-remove { background: #f44336; color: white; border: none; border-radius: 50%; width: 1.5vw; height: 1.5vw; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8em; }
+      .file-remove:hover { background: #d32f2f; }
+      .file-status { font-size: 0.8em; color: #4caf50; margin-left: 1vw; }
+
+      #toggleBar {
+        width: 100%;
+        height: 3vh;
+        background: #2a2a2a;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        border-top: 1px solid #444;
+        gap: 1.5vw;
+        z-index: 99;
+        font-size: 14px; /* Set baseline for 'em' units in toggles */
+      }
+
+      .model-toggle { display: flex; align-items: center; gap: 0.5vw; font-size: 0.85em; }
+      .model-toggle label { cursor: pointer; user-select: none; font-weight: 500; }
+      
+      /* --- NEW & IMPROVED TOGGLE STYLES --- */
+      .toggle-switch {
+        position: relative;
+        width: 3em;   /* 42px based on font-size */
+        height: 1.5em;/* 21px based on font-size */
+        background: #555;
+        border-radius: 0.75em;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .toggle-switch.active {
+        background: #007acc;
+      }
+
+      .toggle-slider {
+        position: absolute;
+        top: 0.15em;
+        left: 0.15em;
+        width: 1.2em;
+        height: 1.2em;
+        background: white;
+        border-radius: 50%;
+        transition: transform 0.3s ease;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(1.5em); /* 3em - 1.2em - (2 * 0.15em) = 1.5em */
+      }
+      /* --- END NEW TOGGLE STYLES --- */
+
+      .model-toggle.disabled label { color: #888; }
+      .browser-controls { display: flex; align-items: center; gap: 0.5vw; }
+      .browser-controls .nav-button { font-size: 0.85em; padding: 0.4vh 1vw; min-width: auto; }
+      .browser-controls .nav-button:disabled { opacity: 0.4; cursor: not-allowed; }
+      body.browser-mode #toggleBar { display: none; height: 0; }
+
+      #mainContent { background-color: #333; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+      #contentArea { flex: 1; background-color: #333; position: relative; overflow: hidden; margin: 0; padding: 0; height: calc(100vh - 6vh - 3vh); }
+      body.browser-mode #contentArea { height: calc(100vh - 6vh); }
+      #notesPanel { position: fixed; right: -28.6vw; top: 0; width: 28.6vw; height: 100vh; background: #f8f9fa; border-left: 2px solid #dee2e6; box-shadow: -2px 0 10px rgba(0,0,0,0.1); z-index: 1000; transition: right 0.3s ease-in-out; display: flex; flex-direction: column; }
+      #notesPanel.open { right: 0; }
+      .notes-header { background: #343a40; color: white; padding: 1.5vh 2vw; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dee2e6; flex-shrink: 0; height: 6vh; box-sizing: border-box; }
+      .notes-title { font-size: 1.1em; font-weight: bold; margin: 0; flex: 1; }
+      .notes-close { background: none; border: none; color: white; font-size: 1.2em; cursor: pointer; padding: 0.5vh; border-radius: 3px; }
+      .notes-close:hover { background: rgba(255,255,255,0.1); }
+      .notes-toolbar { background: #e9ecef; padding: 1vh; border-bottom: 1px solid #dee2e6; display: flex; gap: 0.5vw; flex-wrap: wrap; flex-shrink: 0; height: 5vh; box-sizing: border-box; align-items: center; }
+      .toolbar-btn { background: #6c757d; color: white; border: none; padding: 0.5vh 0.8vw; cursor: pointer; border-radius: 3px; font-size: 0.85em; min-width: 2vw; height: 3vh; display: flex; align-items: center; justify-content: center; }
+      .toolbar-btn:hover { background: #5a6268; }
+      .toolbar-btn.active { background: #007bff; }
+      .toolbar-separator { width: 1px; height: 2.4vh; background: #adb5bd; margin: 0 0.2vw; }
+      .notes-content { flex: 1; padding: 1.5vh; display: flex; flex-direction: column; gap: 1vh; overflow-y: auto; min-height: 0; }
+      .note-info { display: flex; gap: 1vw; align-items: center; flex-shrink: 0; }
+      .note-info input { padding: 0.5vh 0.8vw; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9em; }
+      .note-info input[type="text"] { flex: 1; }
+      #noteEditor { flex: 1; border: 1px solid #ced4da; border-radius: 4px; padding: 1.5vh; font-size: 14px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.5; resize: none; outline: none; background: white; overflow-y: auto; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; min-height: 20vh; max-height: none; }
+      #noteEditor:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
+      .notes-actions { padding: 1.5vh; border-top: 1px solid #dee2e6; background: #f8f9fa; display: flex; gap: 1vw; justify-content: flex-end; flex-shrink: 0; height: 6vh; box-sizing: border-box; align-items: center; }
+      .action-btn { padding: 0.8vh 1.5vw; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; font-weight: 500; transition: all 0.2s; }
+      .btn-primary { background: #007bff; color: white; }
+      .btn-primary:hover { background: #0056b3; }
+      .btn-secondary { background: #6c757d; color: white; }
+      .btn-secondary:hover { background: #545b62; }
+      .btn-success { background: #28a745; color: white; }
+      .btn-success:hover { background: #1e7e34; }
+      body.notes-open #mainContent { margin-right: 28.6vw; transition: margin-right 0.3s ease-in-out; }
+      .word-count { font-size: 0.8em; color: #6c757d; text-align: right; margin-top: 0.5vh; flex-shrink: 0; }
+      .notes-content::-webkit-scrollbar, #noteEditor::-webkit-scrollbar { width: 8px; height: 8px; }
+      .notes-content::-webkit-scrollbar-track, #noteEditor::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+      .notes-content::-webkit-scrollbar-thumb, #noteEditor::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+      .notes-content::-webkit-scrollbar-thumb:hover, #noteEditor::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+      .notes-content::-webkit-scrollbar-corner, #noteEditor::-webkit-scrollbar-corner { background: #f1f1f1; }
+      @media (max-width: 1200px) { .nav-button { font-size: 0.8em; padding: 0.4vh 1vw; } .model-toggle { font-size: 0.8em; } }
+    </style>
+  </head>
+  <body>
+    <div id="mainContent">
+      <div id="topBar">
+        <div class="nav-section">
+          <button class="nav-button icon-button" onclick="scrollViews('left')" id="leftBtn" title="Scroll Left">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          </button>
+          <button class="nav-button icon-button" onclick="scrollViews('right')" id="rightBtn" title="Scroll Right">
+            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+          </button>
+          <button class="nav-button new-tab-btn" onclick="toggleBrowserMode()" id="newTabBtn">INTERNET🌍</button>
+          <button class="nav-button notes-btn" onclick="toggleNotesPanel()" id="notesBtn">📝 Notes</button>
+          <span class="status-indicator" id="statusIndicator">Showing 3 of 6 AI models</span>
+          <span class="mode-indicator" id="modeIndicator" style="display: none;">Browser Mode </span>
+        </div>
+        
+        <input id="prompt" type="text" placeholder="Type prompt for all enabled AI models..." />
+        
+        <div class="browser-controls" id="browserControls" style="display: none;">
+            <button class="nav-button icon-button" onclick="browserBack()" id="backBtn" title="Back">⬅️</button>
+            <button class="nav-button icon-button" onclick="browserForward()" id="forwardBtn" title="Forward">➡️</button>
+            <button class="nav-button" onclick="browserReload()" id="reloadBtn">🔄Reload</button>
+        </div>
+        
+        <input id="urlInput" type="url" placeholder="Enter URL (e.g., https://google.com)" />
+        
+        <div class="nav-section">
+          <button id="fileBtn" onclick="selectFiles()">📁 Select File(s)</button>
+          <button id="sendBtn" onclick="send()">Send to All</button>
+          <button id="goBtn" onclick="navigateToUrl()">Go</button>
+          <button class="nav-button" onclick="closeBrowserMode()" id="closeTabBtn">🤖 AI MODE</button>
+        </div>
+        
+        <div id="fileInfo" class="file-info" style="display: none;">
+          <span class="file-icon">📄</span>
+          <span class="file-name" id="fileName"></span>
+          <button class="file-remove" onclick="clearFiles()">×</button>
+        </div>
+      </div>
+      
+      <div id="toggleBar">
+        <div class="model-toggle" data-model="0">
+          <label for="toggle-chatgpt">ChatGPT</label>
+          <div class="toggle-switch active" onclick="toggleModel(0)"><div class="toggle-slider"></div></div>
+        </div>
+        <div class="model-toggle" data-model="1">
+          <label for="toggle-claude">Claude</label>
+          <div class="toggle-switch active" onclick="toggleModel(1)"><div class="toggle-slider"></div></div>
+        </div>
+        <div class="model-toggle" data-model="2">
+          <label for="toggle-gemini">Gemini</label>
+          <div class="toggle-switch active" onclick="toggleModel(2)"><div class="toggle-slider"></div></div>
+        </div>
+        <div class="model-toggle" data-model="3">
+          <label for="toggle-grok">Grok</label>
+          <div class="toggle-switch active" onclick="toggleModel(3)"><div class="toggle-slider"></div></div>
+        </div>
+        <div class="model-toggle" data-model="4">
+          <label for="toggle-deepseek">DeepSeek</label>
+          <div class="toggle-switch active" onclick="toggleModel(4)"><div class="toggle-slider"></div></div>
+        </div>
+        <div class="model-toggle" data-model="5">
+          <label for="toggle-perplexity">Perplexity</label>
+          <div class="toggle-switch active" onclick="toggleModel(5)"><div class="toggle-slider"></div></div>
+        </div>
+      </div>
+
+      <div id="contentArea"></div>
+    </div>
+
+    <div id="notesPanel">
+      <div class="notes-header"><h3 class="notes-title">📝 Quick Notes</h3><button class="notes-close" onclick="toggleNotesPanel()">✕</button></div>
+      <div class="notes-toolbar">
+        <button class="toolbar-btn" onclick="formatText('bold')" title="Bold"><b>B</b></button>
+        <button class="toolbar-btn" onclick="formatText('italic')" title="Italic"><i>I</i></button>
+        <button class="toolbar-btn" onclick="formatText('underline')" title="Underline"><u>U</u></button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-btn" onclick="insertList('ul')" title="Bullet List">• List</button>
+        <button class="toolbar-btn" onclick="insertList('ol')" title="Numbered List">1. List</button>
+        <div class="toolbar-separator"></div>
+        <button class="toolbar-btn" onclick="insertTimestamp()" title="Insert Timestamp">🕑</button>
+        <button class="toolbar-btn" onclick="clearEditor()" title="Clear All">Clear</button>
+      </div>
+      <div class="notes-content">
+        <div class="note-info"><input type="text" id="noteTitle" placeholder="Note title..." maxlength="100"><input type="text" id="noteTag" placeholder="Tag" maxlength="20"></div>
+        <div contenteditable="true" id="noteEditor" placeholder="Start typing your notes here..."></div>
+        <div class="word-count" id="wordCount">0 words, 0 characters</div>
+      </div>
+      <div class="notes-actions"><button class="action-btn btn-primary" onclick="saveNote()">💾 Save Note</button></div>
+    </div>
+    
+    <script src="renderer.js"></script>
+    <script>
+      // This script block can be removed if all its logic is within renderer.js
+      // Keeping it for now as it contains some initialization logic.
+    </script>
+  </body>
+</html>
