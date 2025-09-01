@@ -2,41 +2,42 @@
   "name": "simsultai",
   "version": "1.0.0",
   "description": "Browse Internet and AI models side by side for free",
-  "main": "main.js",
+  "main": "dist/app/main.js", 
   "scripts": {
-    "start": "electron .",
-    "dist": "electron-builder"
+  "start": "electron .",
+  "obfuscate": "node obfuscate.js", 
+  "dist": "npm run obfuscate && electron-builder" 
   },
   "build": {
-  "appId": "com.simsultai.desktop",
-  "productName": "SimsultAI",
-  "files": [
-    "main.js",
-    "renderer.js",
-    "index.html",
-    "package.json",
-    "assets/**/*"
-  ],
-  "publish": {
-    "provider": "github",
-    "owner": "parthagrawal312",
-    "repo": "SimsultAI"
-  },
-  "win": {
-    "target": "nsis",
-    "icon": "assets/icon.ico"
-  },
-  "mac": {
-    "target": "dmg",
-    "icon": "assets/icon.icns"
-  },
-  "linux": {
-    "target": "AppImage",
-    "icon": "assets/icon.png"
-  }
+    "appId": "com.simsultai.desktop",
+    "productName": "SimsultAI",
+    "files": [ 
+      "dist/app/**/*",
+      "index.html",
+      "package.json",
+      "assets/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "parthagrawal312",
+      "repo": "SimsultAI"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
   },
   "devDependencies": {
-    "electron": "^30.0.0"
+    "electron": "^30.0.0",
+    "javascript-obfuscator": "^4.1.1"
   },
   "dependencies": {
     "electron-updater": "^6.6.2",
