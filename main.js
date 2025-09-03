@@ -1,6 +1,9 @@
-// Modify this line at the top of main.js
 
-const { app, BrowserWindow, BrowserView, ipcMain, screen, dialog } = require("electron");
+const { app, BrowserWindow, BrowserView, ipcMain, screen, dialog, shell } = require("electron");
+const { autoUpdater } = require("electron-updater");
+const log = require('electron-log');
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
 const path = require("path");
 const fs = require("fs");
 const mime = require('mime-types');
@@ -161,7 +164,29 @@ app.whenReady().then(() => {
 
   resizeViews();
   win.on("resize", resizeViews);
+  // --- Add this new block for manual update notifications ---
 
+// Just check for updates, don't automatically download or install
+  autoUpdater.checkForUpdates();
+
+// Listen for the "update-available" event
+  autoUpdater.on('update-available', (info) => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: 'A new version of SimsultAI is available!',
+      detail: `Version ${info.version} is ready to be downloaded. You are currently on version ${app.getVersion()}.`,
+      buttons: ['Download Now', 'Later'],
+      defaultId: 0, // "Download Now" is the default button
+      cancelId: 1   // "Later" is the cancel button
+    }).then(result => {
+    // Check which button the user clicked (0 is the first button)
+    if (result.response === 0) {
+      // If they clicked "Download Now", open the latest release page on GitHub
+      shell.openExternal('https://github.com/parthagrawal312/SimsultAI/releases/latest');
+      }
+    });
+  });
   ipcMain.on("enterBrowserMode", (event) => {
     isBrowserMode = true;
     createBrowserView();
